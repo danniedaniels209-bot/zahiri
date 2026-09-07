@@ -1,0 +1,41 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Builds
+dist/
+build/
+*.tsbuildinfo
+
+# Expo / React Native
+mobile/.expo/
+mobile/android/
+mobile/ios/
+mobile/web-build/
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local build/test artifacts
+build-apk.log
+fetch-gradle.sh
+.claude/
+**/.claude/
+# Scratch files from manual endpoint testing
+server/*.png
+server/*.jpg

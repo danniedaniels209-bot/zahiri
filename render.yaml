@@ -1,0 +1,82 @@
+# Render Blueprint for the Zahiri API.
+#
+# Deploy:
+#   1. Push this repository to GitHub.
+#   2. Render Dashboard -> New -> Blueprint -> pick the repo.
+#   3. Fill in the secrets marked `sync: false` when Render prompts for them.
+#
+# Note on the free plan: an idle instance is spun down and the next request
+# triggers a cold start of roughly 30-60 seconds. The mobile app handles this
+# (it retries 502/503 and shows a "waking up" state), but upgrading to Starter
+# removes the delay entirely.
+
+services:
+  - type: web
+    name: zahiri-api
+    runtime: node
+    plan: free
+    region: frankfurt # closest available region to Nigeria
+    rootDir: server
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    autoDeploy: true
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Render injects PORT; the app reads it.
+      - key: PORT
+        value: 8080
+
+      # Native apps send no Origin header, so this only matters for a web client.
+      - key: CORS_ORIGINS
+        value: ''
+
+      # Render's DNS resolves SRV records correctly, so no override is needed.
+      - key: DNS_SERVERS
+        value: ''
+
+      # ---- Secrets: entered in the Render dashboard, never committed ----
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true # Render generates a strong random value
+
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+
+      # ---- AI configuration ----
+      - key: NVIDIA_BASE_URL
+        value: https://integrate.api.nvidia.com/v1
+      - key: NVIDIA_TEXT_MODEL
+        value: nvidia/nemotron-3.5-lightning-30b-a3b
+      - key: NVIDIA_VISION_MODEL
+        value: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+      - key: NVIDIA_RPM_LIMIT
+        value: 40
+
+      - key: OPENROUTER_BASE_URL
+        value: https://openrouter.ai/api/v1
+      - key: OPENROUTER_TEXT_MODEL
+        value: openrouter/free
+      - key: OPENROUTER_VISION_MODEL
+        value: google/gemma-4-31b-it:free
+
+      - key: AI_PRIMARY_PROVIDER
+        value: nvidia
+      - key: AI_FALLBACK_ENABLED
+        value: true
+
+      # ---- WhatsApp Cloud API (optional; leave blank until configured) ----
+      - key: WHATSAPP_VERIFY_TOKEN
+        generateValue: true
+      - key: WHATSAPP_APP_SECRET
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
