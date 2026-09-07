@@ -5,7 +5,12 @@ import compression from 'compression';
 import morgan from 'morgan';
 
 import { corsOrigins, env, isProd } from './config/env.js';
-import { connectMongo, disconnectMongo, mongoState } from './db/mongo.js';
+import {
+  connectMongo,
+  disconnectMongo,
+  mongoDatabaseName,
+  mongoState,
+} from './db/mongo.js';
 import { errorHandler, notFound } from './middleware/error.js';
 import { globalLimiter } from './middleware/rateLimit.js';
 import { configuredProviders } from './services/ai/client.js';
@@ -90,6 +95,7 @@ app.get('/health', (_req, res) => {
   res.status(db === 'connected' ? 200 : 503).json({
     status: db === 'connected' ? 'ok' : 'degraded',
     database: db,
+    databaseName: mongoDatabaseName(),
     aiProviders: configuredProviders(),
     uptimeSeconds: Math.floor(process.uptime()),
     version: '1.0.0',

@@ -15,7 +15,9 @@
     "typecheck": "tsc --noEmit",
     "dbcheck": "tsx src/scripts/dbcheck.ts",
     "grant": "tsx src/scripts/grantRole.ts",
-    "award": "tsx src/scripts/award.ts"
+    "award": "tsx src/scripts/award.ts",
+    "whichdb": "tsx src/scripts/whichdb.ts",
+    "test:uri": "tsx src/scripts/testUriParser.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
