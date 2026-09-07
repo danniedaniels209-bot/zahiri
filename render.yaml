@@ -17,7 +17,10 @@ services:
     plan: free
     region: frankfurt # closest available region to Nigeria
     rootDir: server
-    buildCommand: npm ci && npm run build
+    # --include=dev is required: NODE_ENV=production (set below) makes npm skip
+    # devDependencies, and the build needs typescript and @types/node from there.
+    # Without it, tsc has no Node globals and every file fails to compile.
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start
     healthCheckPath: /health
     autoDeploy: true
