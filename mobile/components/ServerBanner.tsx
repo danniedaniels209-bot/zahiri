@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { subscribeServerState, type ServerState } from '../lib/serverStatus';
 import { alpha, colors } from '../theme/tokens';

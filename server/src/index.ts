@@ -32,21 +32,43 @@ import campaignRoutes from './routes/campaigns.routes.js';
 import pluginRoutes from './routes/plugins.routes.js';
 import b2bRoutes from './routes/b2b.routes.js';
 import reviewRoutes from './routes/review.routes.js';
+import { hasWebBuild, mountWeb } from './web.js';
 
 const app = express();
 
 app.set('trust proxy', 1); // Render terminates TLS at its proxy
 
+// A JSON-only API can lock everything down. Once the web app is served from
+// this origin it needs its own bundle, styles, fonts and API calls allowed.
+const webBuildPresent = hasWebBuild();
+
+// Both branches must declare the same keys: helmet types the directive map with
+// an index signature, so a union of two differently-shaped objects is rejected.
+const cspDirectives: Record<string, string[]> = webBuildPresent
+  ? {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      // React Native Web injects styles at runtime, so inline styles are required.
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'blob:'],
+      fontSrc: ["'self'", 'data:'],
+      connectSrc: ["'self'"],
+      mediaSrc: ["'self'", 'data:', 'blob:'],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+    }
+  : {
+      defaultSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+      baseUri: ["'none'"],
+      formAction: ["'none'"],
+    };
+
 app.use(
   helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'none'"],
-        frameAncestors: ["'none'"],
-        baseUri: ["'none'"],
-        formAction: ["'none'"],
-      },
-    },
+    contentSecurityPolicy: { directives: cspDirectives },
     crossOriginEmbedderPolicy: false,
     hsts: isProd ? { maxAge: 31_536_000, includeSubDomains: true, preload: true } : false,
     referrerPolicy: { policy: 'no-referrer' },
@@ -102,14 +124,18 @@ app.get('/health', (_req, res) => {
   });
 });
 
-app.get('/', (_req, res) => {
-  res.json({
-    name: 'Zahiri API',
-    tagline: 'Verified Information, Empowered Minds',
-    docs: '/api/docs',
-    health: '/health',
+// With a web build present the app itself owns "/", so this only answers when
+// the API is running on its own.
+if (!webBuildPresent) {
+  app.get('/', (_req, res) => {
+    res.json({
+      name: 'Zahiri API',
+      tagline: 'Verified Information, Empowered Minds',
+      docs: '/api/docs',
+      health: '/health',
+    });
   });
-});
+}
 
 /** A plain map of the surface, useful when wiring the app or a newsroom client. */
 app.get('/api/docs', (_req, res) => {
@@ -162,6 +188,9 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/b2b', b2bRoutes);
 app.use('/api/review', reviewRoutes);
+
+// After all API routes: unmatched non-API paths fall through to the app shell.
+mountWeb(app);
 
 app.use(notFound);
 app.use(errorHandler);

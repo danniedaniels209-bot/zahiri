@@ -9,7 +9,8 @@ node_modules/
 .pnp.js
 
 # Builds
-dist/
+/server/dist/
+/mobile/dist/
 build/
 *.tsbuildinfo
 
@@ -39,3 +40,13 @@ fetch-gradle.sh
 # Scratch files from manual endpoint testing
 server/*.png
 server/*.jpg
+
+# The published web export is deliberately committed: Render serves it directly.
+# Expo writes hashed assets under paths containing both "node_modules" and
+# "build" (e.g. @expo/vector-icons/build/vendor/.../Ionicons.ttf), so the
+# generic rules above would silently strip every font and icon from the deploy.
+# Each excluded parent directory has to be re-included before the files in it.
+!server/public/
+!server/public/**/node_modules/
+!server/public/**/build/
+!server/public/**

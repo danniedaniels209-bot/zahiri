@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Platform, View } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { BlurView } from 'expo-blur';
 import { useAuth } from '../../lib/auth';
 import { warmUp } from '../../lib/api';
