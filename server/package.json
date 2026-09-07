@@ -17,7 +17,8 @@
     "grant": "tsx src/scripts/grantRole.ts",
     "award": "tsx src/scripts/award.ts",
     "whichdb": "tsx src/scripts/whichdb.ts",
-    "test:uri": "tsx src/scripts/testUriParser.ts"
+    "test:uri": "tsx src/scripts/testUriParser.ts",
+    "rewards:clear": "tsx src/scripts/clearRewards.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

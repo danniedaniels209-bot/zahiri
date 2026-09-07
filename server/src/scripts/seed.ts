@@ -1,13 +1,12 @@
 /**
  * Seeds the collections Zahiri needs to be usable on first run: game rounds,
- * the reward catalogue, training modules, radio partners, a starter source
- * reputation list, and a few alerts.
+ * training modules, radio partners, a starter source reputation list, and a
+ * few alerts. No rewards — see the note below.
  *
  * Safe to re-run: everything is upserted on a natural key.
  */
 import { connectMongo, disconnectMongo } from '../db/mongo.js';
 import { GameRound } from '../models/GameRound.js';
-import { Reward } from '../models/Reward.js';
 import { TrainingModule, Campaign } from '../models/Campaign.js';
 import { RadioPartner } from '../models/RadioPartner.js';
 import { SourceReputation } from '../models/SourceReputation.js';
@@ -97,40 +96,16 @@ const GAME_ROUNDS = [
   },
 ];
 
-const REWARDS = [
-  {
-    slug: 'data-bundle-1gb',
-    title: '1GB Data Bundle',
-    description: 'Airtime data credit on any Nigerian network.',
-    costPoints: 500,
-  },
-  {
-    slug: 'data-bundle-5gb',
-    title: '5GB Data Bundle',
-    description: 'For heavy verifiers and ambassadors.',
-    costPoints: 2000,
-  },
-  {
-    slug: 'zahiri-premium-month',
-    title: 'Zahiri Premium — 1 Month',
-    description: 'Unlimited media checks, priority human review, and creator upload rights.',
-    costPoints: 1200,
-  },
-  {
-    slug: 'ambassador-kit',
-    title: 'Youth Ambassador Kit',
-    description: 'Printed training materials and Zahiri branded items for school outreach.',
-    costPoints: 3000,
-    premiumOnly: false,
-  },
-  {
-    slug: 'creator-payout-5k',
-    title: '₦5,000 Creator Payout',
-    description: 'Cash payout for premium creators, based on verified resource engagement.',
-    costPoints: 5000,
-    premiumOnly: true,
-  },
-];
+/**
+ * No reward catalogue is seeded.
+ *
+ * The original seed offered data bundles, a naira payout and a physical kit.
+ * Nothing in Zahiri can fulfil any of those, and an app built on verified
+ * information should not be the one making promises it cannot keep. Points
+ * still accrue and still drive the leaderboard; add rewards here only once
+ * there is a real fulfilment process behind them.
+ */
+
 
 const MODULES = [
   {
@@ -232,11 +207,6 @@ async function seed() {
     );
   }
   console.log(`[seed] ${GAME_ROUNDS.length} game rounds`);
-
-  for (const r of REWARDS) {
-    await Reward.updateOne({ slug: r.slug }, { $set: { ...r, active: true } }, { upsert: true });
-  }
-  console.log(`[seed] ${REWARDS.length} rewards`);
 
   for (const m of MODULES) {
     await TrainingModule.updateOne({ slug: m.slug }, { $set: m }, { upsert: true });

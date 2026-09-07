@@ -4,24 +4,29 @@
     "appVersionSource": "local"
   },
   "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      }
+    },
     "preview": {
-      "//": "Installable APK for testing on a device. This is the one you want.",
+      "distribution": "internal",
+      "channel": "preview",
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
       },
-      "distribution": "internal",
-      "channel": "preview",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://zahiri-api.onrender.com"
       }
     },
     "production": {
-      "//": "AAB for the Play Store.",
+      "channel": "production",
       "android": {
         "buildType": "app-bundle"
       },
-      "channel": "production",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://zahiri-api.onrender.com"
       }

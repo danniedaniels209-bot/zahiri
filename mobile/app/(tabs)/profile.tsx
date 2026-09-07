@@ -168,6 +168,19 @@ export default function Profile() {
         <Loading label="Loading rewards" />
       ) : rewards.isError ? (
         <EmptyState icon="gift-outline" title="Could not load rewards" />
+      ) : rewards.data!.items.length === 0 ? (
+        <Card>
+          <Text className="font-medium text-chalk" style={{ fontSize: 14 }}>
+            Nothing to redeem yet
+          </Text>
+          <Text
+            className="font-sans text-chalk-soft mt-1.5"
+            style={{ fontSize: 12.5, lineHeight: 18 }}
+          >
+            Your points still count towards the leaderboard and your Truth Hunters rank.
+            Rewards will appear here once there is something real behind them.
+          </Text>
+        </Card>
       ) : (
         <View style={{ gap: 9 }}>
           {rewards.data!.items.map((r, i) => (

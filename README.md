@@ -46,9 +46,15 @@ which was explicitly out of scope for this build.
 ### Reinforcement & reach
 
 Truth Hunters game (server-scored, seasonal leaderboard) · Daily personalised
-alerts · Reward system with an append-only points ledger · School sensitisation
+alerts · Points system with an append-only ledger · School sensitisation
 campaigns and training modules · Radio partner schedule · Accessibility
 preferences · Newsroom & NGO B2B API with hashed keys and monthly quotas.
+
+> **No reward catalogue ships by default.** The redemption machinery exists
+> (`/api/rewards/*`, the ledger, admin-created rewards), but nothing is seeded:
+> an app about verified information should not promise data bundles or cash it
+> cannot deliver. Points drive the leaderboard. Add rewards through
+> `POST /api/rewards/catalogue` once a real fulfilment process exists.
 
 ### Not built
 
@@ -66,7 +72,7 @@ writing one gateway adapter, not touching the engine.
 cd server
 npm install
 cp .env.example .env        # fill in MONGODB_URI, NVIDIA_API_KEY, OPENROUTER_API_KEY, JWT_SECRET
-npm run seed                # game rounds, rewards, modules, radio partners, sources, alerts
+npm run seed                # game rounds, modules, radio partners, sources, alerts
 npm run dev                 # http://localhost:8080
 ```
 
