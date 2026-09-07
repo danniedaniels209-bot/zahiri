@@ -32,6 +32,7 @@ import campaignRoutes from './routes/campaigns.routes.js';
 import pluginRoutes from './routes/plugins.routes.js';
 import b2bRoutes from './routes/b2b.routes.js';
 import reviewRoutes from './routes/review.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 import { hasWebBuild, mountWeb } from './web.js';
 
 const app = express();
@@ -158,6 +159,14 @@ app.get('/api/docs', (_req, res) => {
       'POST /api/review/:id/decide': 'Submit a human verdict, notifies the user',
       'GET /api/review/stats': 'Queue depth and engine-vs-human agreement',
     },
+    admin: {
+      'GET /api/admin/overview': 'What content exists',
+      'POST|PATCH|DELETE /api/admin/radio': 'Radio partners',
+      'POST|PATCH|DELETE /api/admin/campaigns': 'School campaigns',
+      'POST|PATCH|DELETE /api/admin/modules': 'Training modules',
+      'POST|PATCH|DELETE /api/admin/sources': 'Source reputation & watchlist',
+      'POST|PATCH|DELETE /api/admin/rounds': 'Truth Hunters rounds',
+    },
     reinforcement: {
       'GET /api/game/rounds': 'Deal Truth Hunters rounds',
       'POST /api/game/sessions': 'Submit a run, get scored',
@@ -188,6 +197,7 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/b2b', b2bRoutes);
 app.use('/api/review', reviewRoutes);
+app.use('/api/admin', adminRoutes);
 
 // After all API routes: unmatched non-API paths fall through to the app shell.
 mountWeb(app);

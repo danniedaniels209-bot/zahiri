@@ -1,14 +1,17 @@
 /**
- * Seeds the collections Zahiri needs to be usable on first run: game rounds,
- * training modules, radio partners, a starter source reputation list, and a
- * few alerts. No rewards — see the note below.
+ * Seeds only content Zahiri can stand behind: game rounds, training modules,
+ * a starter source reputation list, and a few alerts.
+ *
+ * Deliberately not seeded: rewards, radio partnerships and school campaigns.
+ * Each of those named real organisations or promised real value that does not
+ * exist. They are created through /api/admin/* by someone who knows the
+ * arrangement is real.
  *
  * Safe to re-run: everything is upserted on a natural key.
  */
 import { connectMongo, disconnectMongo } from '../db/mongo.js';
 import { GameRound } from '../models/GameRound.js';
-import { TrainingModule, Campaign } from '../models/Campaign.js';
-import { RadioPartner } from '../models/RadioPartner.js';
+import { TrainingModule } from '../models/Campaign.js';
 import { SourceReputation } from '../models/SourceReputation.js';
 import { Alert } from '../models/Alert.js';
 import { User, hashPassword } from '../models/User.js';
@@ -150,36 +153,15 @@ const MODULES = [
   },
 ];
 
-const RADIO = [
-  {
-    station: 'Wazobia FM',
-    frequency: '95.1 FM',
-    state: 'Lagos',
-    languages: ['pcm', 'en'],
-    slots: [{ day: 'Saturday', time: '09:00', programme: 'Zahiri Truth Check' }],
-  },
-  {
-    station: 'Freedom Radio',
-    frequency: '99.5 FM',
-    state: 'Kano',
-    languages: ['ha', 'en'],
-    slots: [{ day: 'Sunday', time: '17:00', programme: 'Gaskiya Yau (Truth Today)' }],
-  },
-  {
-    station: 'Rhythm FM',
-    frequency: '93.7 FM',
-    state: 'Enugu',
-    languages: ['ig', 'en'],
-    slots: [{ day: 'Wednesday', time: '19:30', programme: 'Zahiri Verified' }],
-  },
-  {
-    station: 'Splash FM',
-    frequency: '105.5 FM',
-    state: 'Oyo',
-    languages: ['yo', 'en'],
-    slots: [{ day: 'Friday', time: '08:00', programme: 'Otito (Truth)' }],
-  },
-];
+/**
+ * No radio partnerships are seeded.
+ *
+ * The original seed listed Wazobia FM, Freedom Radio, Rhythm FM and Splash FM
+ * with programme slots. Those are real stations and Zahiri has no arrangement
+ * with any of them, so publishing the list claimed partnerships that do not
+ * exist. Add real ones through POST /api/admin/radio.
+ */
+
 
 const SOURCES = [
   { domain: 'ncdc.gov.ng', displayName: 'Nigeria CDC', score: 96, band: 'trusted' },
@@ -212,15 +194,6 @@ async function seed() {
     await TrainingModule.updateOne({ slug: m.slug }, { $set: m }, { upsert: true });
   }
   console.log(`[seed] ${MODULES.length} training modules`);
-
-  for (const s of RADIO) {
-    await RadioPartner.updateOne(
-      { station: s.station },
-      { $set: { ...s, active: true } },
-      { upsert: true },
-    );
-  }
-  console.log(`[seed] ${RADIO.length} radio partners`);
 
   for (const s of SOURCES) {
     await SourceReputation.updateOne(
@@ -289,28 +262,9 @@ async function seed() {
     console.log('[seed] demo account created: demo@zahiri.app / zahiri1234');
   }
 
-  const campaignCount = await Campaign.countDocuments();
-  if (campaignCount === 0) {
-    await Campaign.create([
-      {
-        school: 'Government College Ibadan',
-        state: 'Oyo',
-        city: 'Ibadan',
-        scheduledFor: new Date(Date.now() + 14 * 864e5),
-        status: 'confirmed',
-      },
-      {
-        school: 'Queen’s College Lagos',
-        state: 'Lagos',
-        city: 'Lagos',
-        scheduledFor: new Date(Date.now() - 30 * 864e5),
-        status: 'completed',
-        studentsReached: 420,
-        teachersTrained: 18,
-      },
-    ]);
-    console.log('[seed] 2 campaigns');
-  }
+  // No campaigns are seeded. The originals named Government College Ibadan and
+  // Queen's College Lagos with student-reach figures that were invented. Real
+  // outreach is recorded through POST /api/admin/campaigns.
 
   await disconnectMongo();
   console.log('[seed] done');
