@@ -13,6 +13,7 @@ import {
   validateUpload,
   verifyMetaSignature,
 } from '../middleware/security.js';
+import { noteInbound, sendText as sendWhatsAppText } from '../services/whatsapp.js';
 
 const router = Router();
 
@@ -44,36 +45,6 @@ function formatVerdict(result: {
   }
   lines.push('', '— Zahiri · Verified Information, Empowered Minds');
   return lines.join('\n');
-}
-
-async function sendWhatsAppText(to: string, body: string) {
-  if (!env.WHATSAPP_ACCESS_TOKEN || !env.WHATSAPP_PHONE_NUMBER_ID) {
-    console.warn('[whatsapp] outbound not configured, skipping reply');
-    return false;
-  }
-
-  const res = await fetch(
-    `https://graph.facebook.com/v21.0/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.WHATSAPP_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to,
-        type: 'text',
-        text: { body: body.slice(0, 4000) },
-      }),
-    },
-  );
-
-  if (!res.ok) {
-    console.error('[whatsapp] send failed:', res.status, await res.text().catch(() => ''));
-    return false;
-  }
-  return true;
 }
 
 /** Download a media file the user forwarded, via the Cloud API two-step. */
@@ -140,7 +111,15 @@ router.post('/whatsapp/webhook', verifyMetaSignature(env.WHATSAPP_APP_SECRET), (
         for (const change of entry.changes ?? []) {
           for (const message of change.value?.messages ?? []) {
             const from: string = message.from;
-            const user = await User.findOne({ whatsappNumber: from }).select('_id language').lean();
+
+            // An inbound message opens a 24-hour window in which Zahiri may
+            // reply freely. Record it so a later fact-checker verdict knows
+            // whether it can send text or must use an approved template.
+            await noteInbound(from);
+
+            const user = await User.findOne({ whatsappNumber: from })
+              .select('_id language')
+              .lean();
 
             const ctx = {
               userId: user?._id?.toString() ?? null,

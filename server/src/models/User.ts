@@ -26,6 +26,12 @@ const userSchema = new Schema(
     },
     topics: { type: [String], default: ['health', 'civic', 'education'] },
     whatsappNumber: { type: String, default: null, index: true, sparse: true },
+    /**
+     * When this user last messaged Zahiri on WhatsApp. Meta only allows
+     * free-form replies for 24 hours after an inbound message; outside that
+     * window an approved template is the only way to reach them.
+     */
+    whatsappLastInboundAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

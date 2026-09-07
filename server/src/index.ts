@@ -26,6 +26,7 @@ import rewardRoutes from './routes/rewards.routes.js';
 import campaignRoutes from './routes/campaigns.routes.js';
 import pluginRoutes from './routes/plugins.routes.js';
 import b2bRoutes from './routes/b2b.routes.js';
+import reviewRoutes from './routes/review.routes.js';
 
 const app = express();
 
@@ -121,6 +122,9 @@ app.get('/api/docs', (_req, res) => {
       'GET /api/verify/watchlist': 'Confirmed AI content-farm watchlist',
       'GET /api/verify/history': 'Your own verification history',
       'GET /api/alerts/crisis': 'Election & Crisis rapid-response feed',
+      'GET /api/review/queue': 'Human fact-checker queue',
+      'POST /api/review/:id/decide': 'Submit a human verdict, notifies the user',
+      'GET /api/review/stats': 'Queue depth and engine-vs-human agreement',
     },
     reinforcement: {
       'GET /api/game/rounds': 'Deal Truth Hunters rounds',
@@ -151,6 +155,7 @@ app.use('/api/rewards', rewardRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/b2b', b2bRoutes);
+app.use('/api/review', reviewRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
