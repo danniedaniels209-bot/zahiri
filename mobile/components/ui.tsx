@@ -20,8 +20,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { alpha, colors, spring, verdictOf } from '../theme/tokens';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+import { CONTENT_MAX_WIDTH, NARROW_MAX_WIDTH, useResponsive } from '../theme/responsive';
+import { AnimatedPressable } from '../theme/cssInterop';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -33,15 +33,28 @@ export function Screen({
   edges = ['top'],
   className = '',
   refreshControl,
+  /** Auth and other single-purpose screens read better in a narrower column. */
+  narrow = false,
 }: {
   children: ReactNode;
   scroll?: boolean;
   edges?: ('top' | 'bottom')[];
   className?: string;
   refreshControl?: React.ReactElement<RefreshControlProps>;
+  narrow?: boolean;
 }) {
+  const { gutter, isDesktop } = useResponsive();
+  const maxWidth = narrow ? NARROW_MAX_WIDTH : CONTENT_MAX_WIDTH;
+
+  // Centred with a cap: a verdict explanation stretched across a desktop
+  // viewport is unreadable, so the column stays a comfortable measure.
   const Body = (
-    <View className={`flex-1 px-gutter ${className}`}>{children}</View>
+    <View
+      className={`flex-1 w-full ${className}`}
+      style={{ maxWidth, alignSelf: 'center', paddingHorizontal: gutter }}
+    >
+      {children}
+    </View>
   );
 
   return (
@@ -49,7 +62,11 @@ export function Screen({
       {scroll ? (
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{ paddingBottom: 48 }}
+          contentContainerStyle={{
+            paddingBottom: isDesktop ? 64 : 48,
+            alignItems: 'center',
+            flexGrow: 1,
+          }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           refreshControl={refreshControl}
@@ -57,7 +74,7 @@ export function Screen({
           {Body}
         </ScrollView>
       ) : (
-        Body
+        <View className="flex-1 items-center">{Body}</View>
       )}
     </SafeAreaView>
   );
@@ -73,10 +90,15 @@ export function Header({
   subtitle?: string;
   right?: ReactNode;
 }) {
+  const { fontScale } = useResponsive();
+
   return (
     <View className="flex-row items-start justify-between pt-2 pb-6">
       <View className="flex-1 pr-3">
-        <Text className="font-display text-h1 text-chalk" style={{ letterSpacing: -0.8 }}>
+        <Text
+          className="font-display text-chalk"
+          style={{ fontSize: 34 * fontScale, lineHeight: 40 * fontScale, letterSpacing: -0.8 }}
+        >
           {title}
         </Text>
         {subtitle ? (

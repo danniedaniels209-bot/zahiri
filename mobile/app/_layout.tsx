@@ -1,4 +1,7 @@
 import '../global.css';
+// Registers className support for Reanimated and LinearGradient. Must run
+// before any screen renders, or their classNames are dropped silently.
+import '../theme/cssInterop';
 
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';

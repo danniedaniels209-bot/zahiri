@@ -20,6 +20,7 @@ import { ServerBanner } from '../components/ServerBanner';
 import { api, ApiError, type VerificationResult } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { alpha, colors } from '../theme/tokens';
+import { CONTENT_MAX_WIDTH, useResponsive } from '../theme/responsive';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -34,6 +35,7 @@ const OPENERS = [
 ];
 
 export default function Chat() {
+  const { gutter } = useResponsive();
   const router = useRouter();
   const { user } = useAuth();
   const scroller = useRef<ScrollView>(null);
@@ -95,10 +97,17 @@ export default function Chat() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         {/* Header */}
-        <View
-          className="flex-row items-center px-gutter py-3"
-          style={{ borderBottomWidth: 1, borderBottomColor: colors.inkEdge, gap: 12 }}
-        >
+        <View style={{ borderBottomWidth: 1, borderBottomColor: colors.inkEdge }}>
+          <View
+            className="flex-row items-center py-3"
+            style={{
+              width: '100%',
+              maxWidth: CONTENT_MAX_WIDTH,
+              alignSelf: 'center',
+              paddingHorizontal: gutter,
+              gap: 12,
+            }}
+          >
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <Ionicons name="arrow-back" size={22} color={colors.chalkSoft} />
           </Pressable>
@@ -147,13 +156,15 @@ export default function Chat() {
             >
               Verify
             </Text>
-          </Pressable>
+            </Pressable>
+          </View>
         </View>
 
         <ScrollView
           ref={scroller}
-          className="flex-1 px-gutter"
-          contentContainerStyle={{ paddingVertical: 16, gap: 12 }}
+          className="flex-1"
+          style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
+          contentContainerStyle={{ paddingVertical: 16, gap: 12, paddingHorizontal: gutter }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -203,10 +214,16 @@ export default function Chat() {
         </ScrollView>
 
         {/* Composer */}
-        <View
-          className="px-gutter py-3"
-          style={{ borderTopWidth: 1, borderTopColor: colors.inkEdge }}
-        >
+        <View style={{ borderTopWidth: 1, borderTopColor: colors.inkEdge }}>
+          <View
+            className="py-3"
+            style={{
+              width: '100%',
+              maxWidth: CONTENT_MAX_WIDTH,
+              alignSelf: 'center',
+              paddingHorizontal: gutter,
+            }}
+          >
           <View
             className="flex-row items-end rounded-3xl px-4 py-2"
             style={{
@@ -248,6 +265,7 @@ export default function Chat() {
                 color={draft.trim() && !busy ? colors.inkDeep : colors.chalkFaint}
               />
             </Pressable>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>

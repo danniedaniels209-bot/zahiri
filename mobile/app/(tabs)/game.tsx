@@ -21,6 +21,7 @@ import { Button, Card, ConfidenceMeter, EmptyState, Loading, VerdictBadge } from
 import { ServerBanner } from '../../components/ServerBanner';
 import { api, type GameRoundCard } from '../../lib/api';
 import { alpha, colors, spring, VERDICT } from '../../theme/tokens';
+import { CONTENT_MAX_WIDTH, useResponsive } from '../../theme/responsive';
 
 type Answer = 'verified' | 'false' | 'misleading';
 
@@ -48,6 +49,7 @@ const CHOICES: { key: Answer; label: string; icon: keyof typeof Ionicons.glyphMa
 ];
 
 export default function Game() {
+  const { gutter } = useResponsive();
   const qc = useQueryClient();
   const [playing, setPlaying] = useState(false);
   const [index, setIndex] = useState(0);
@@ -126,8 +128,9 @@ export default function Game() {
     return (
       <SafeAreaView edges={['top']} className="flex-1 bg-ink">
         <Animated.ScrollView
-          className="flex-1 px-gutter"
-          contentContainerStyle={{ paddingBottom: 110 }}
+          className="flex-1"
+          style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
+          contentContainerStyle={{ paddingBottom: 110, paddingHorizontal: gutter }}
           showsVerticalScrollIndicator={false}
           entering={FadeIn.duration(320)}
         >
@@ -202,7 +205,7 @@ export default function Game() {
 
     if (rounds.isLoading || submit.isPending) {
       return (
-        <SafeAreaView edges={['top']} className="flex-1 bg-ink px-gutter">
+        <SafeAreaView edges={['top']} className="flex-1 bg-ink" style={{ paddingHorizontal: gutter }}>
           <Loading label={submit.isPending ? 'Scoring your run' : 'Dealing your rounds'} />
         </SafeAreaView>
       );
@@ -210,7 +213,7 @@ export default function Game() {
 
     if (rounds.isError || !current) {
       return (
-        <SafeAreaView edges={['top']} className="flex-1 bg-ink px-gutter">
+        <SafeAreaView edges={['top']} className="flex-1 bg-ink" style={{ paddingHorizontal: gutter }}>
           <EmptyState
             icon="alert-circle-outline"
             title="Could not start the game"
@@ -223,7 +226,8 @@ export default function Game() {
 
     return (
       <SafeAreaView edges={['top']} className="flex-1 bg-ink">
-        <View className="flex-1 px-gutter">
+        <View className="flex-1"
+          style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}>
           {/* Progress */}
           <View className="flex-row items-center pt-2 pb-5" style={{ gap: 12 }}>
             <Pressable onPress={() => setPlaying(false)} hitSlop={10}>
@@ -268,8 +272,9 @@ export default function Game() {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-ink">
       <Animated.ScrollView
-        className="flex-1 px-gutter"
-        contentContainerStyle={{ paddingBottom: 110 }}
+        className="flex-1"
+          style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
+        contentContainerStyle={{ paddingBottom: 110, paddingHorizontal: gutter }}
         showsVerticalScrollIndicator={false}
       >
         <View className="pt-2 pb-5">

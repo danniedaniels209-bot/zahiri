@@ -8,10 +8,12 @@ import { Field } from '../../components/Field';
 import { useAuth } from '../../lib/auth';
 import { ApiError } from '../../lib/api';
 import { colors } from '../../theme/tokens';
+import { NARROW_MAX_WIDTH, useResponsive } from '../../theme/responsive';
 
 export default function SignIn() {
   const { signIn } = useAuth();
   const router = useRouter();
+  const { gutter } = useResponsive();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,8 +46,16 @@ export default function SignIn() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          className="flex-1 px-gutter"
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingBottom: 32 }}
+          className="flex-1"
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            paddingBottom: 32,
+            paddingHorizontal: gutter,
+            width: '100%',
+            maxWidth: NARROW_MAX_WIDTH,
+            alignSelf: 'center',
+          }}
           keyboardShouldPersistTaps="handled"
         >
           <Pressable onPress={() => router.back()} hitSlop={12} className="mb-8" style={{ alignSelf: 'flex-start' }}>

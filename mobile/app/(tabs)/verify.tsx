@@ -22,6 +22,7 @@ import { VerdictSheet } from '../../components/VerdictSheet';
 import { ServerBanner } from '../../components/ServerBanner';
 import { api, apiUpload, ApiError, type VerificationResult } from '../../lib/api';
 import { alpha, colors } from '../../theme/tokens';
+import { CONTENT_MAX_WIDTH, useResponsive } from '../../theme/responsive';
 
 type Mode = 'text' | 'media';
 
@@ -32,6 +33,7 @@ const EXAMPLES = [
 ];
 
 export default function Verify() {
+  const { gutter } = useResponsive();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>('text');
   const [claim, setClaim] = useState('');
@@ -123,8 +125,9 @@ export default function Verify() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          className="flex-1 px-gutter"
-          contentContainerStyle={{ paddingBottom: 110 }}
+          className="flex-1"
+          style={{ width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' }}
+          contentContainerStyle={{ paddingBottom: 110, paddingHorizontal: gutter }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

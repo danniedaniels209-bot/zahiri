@@ -8,6 +8,7 @@ import { Field } from '../../components/Field';
 import { useAuth } from '../../lib/auth';
 import { ApiError } from '../../lib/api';
 import { alpha, colors } from '../../theme/tokens';
+import { NARROW_MAX_WIDTH, useResponsive } from '../../theme/responsive';
 
 const ROLES = [
   { value: 'user', label: 'Everyday user', icon: 'person-outline' as const },
@@ -29,6 +30,7 @@ function passwordChecks(pw: string) {
 export default function SignUp() {
   const { signUp } = useAuth();
   const router = useRouter();
+  const { gutter } = useResponsive();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -69,8 +71,15 @@ export default function SignUp() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          className="flex-1 px-gutter"
-          contentContainerStyle={{ paddingBottom: 40, paddingTop: 8 }}
+          className="flex-1"
+          contentContainerStyle={{
+            paddingBottom: 40,
+            paddingTop: 8,
+            paddingHorizontal: gutter,
+            width: '100%',
+            maxWidth: NARROW_MAX_WIDTH,
+            alignSelf: 'center',
+          }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

@@ -6,9 +6,11 @@ import { BlurView } from 'expo-blur';
 import { useAuth } from '../../lib/auth';
 import { warmUp } from '../../lib/api';
 import { alpha, colors } from '../../theme/tokens';
+import { CONTENT_MAX_WIDTH, useResponsive } from '../../theme/responsive';
 
 export default function TabsLayout() {
   const { user, loading } = useAuth();
+  const { isDesktop, isWide } = useResponsive();
 
   useEffect(() => {
     // Kick the Render instance awake while the user reads the first screen.
@@ -29,7 +31,23 @@ export default function TabsLayout() {
           borderTopWidth: 1,
           borderTopColor: colors.inkEdge,
           backgroundColor: Platform.OS === 'android' ? colors.inkRaised : 'transparent',
-          height: 62,
+          // A full-width bar across a desktop viewport looks like a stretched
+          // phone, so it is capped and centred to match the content column.
+          ...(isDesktop
+            ? {
+                maxWidth: CONTENT_MAX_WIDTH,
+                alignSelf: 'center',
+                left: 0,
+                right: 0,
+                marginHorizontal: 'auto',
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
+                borderLeftWidth: 1,
+                borderRightWidth: 1,
+                borderColor: colors.inkEdge,
+              }
+            : {}),
+          height: isWide ? 68 : 62,
           paddingBottom: 8,
           paddingTop: 8,
           elevation: 0,
