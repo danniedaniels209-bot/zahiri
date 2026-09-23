@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -6,11 +6,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { Card, Chip, EmptyState, Header, Loading, Screen, SectionTitle, TouchCard, VerdictBadge } from '../../components/ui';
+import { Button, Card, Chip, EmptyState, Header, Screen, SectionTitle, SkeletonCard, TouchCard, VerdictBadge } from '../../components/ui';
 import { ServerBanner } from '../../components/ServerBanner';
 import { api, type Alert } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { alpha, colors, topicMeta, verdictOf } from '../../theme/tokens';
+import { useResponsive } from '../../theme/responsive';
 
 function greeting() {
   const h = new Date().getHours();
@@ -23,6 +24,7 @@ export default function Today() {
   const { user } = useAuth();
   const router = useRouter();
   const qc = useQueryClient();
+  const { isWide } = useResponsive();
   const [refreshing, setRefreshing] = useState(false);
 
   const alerts = useQuery({
@@ -46,6 +48,12 @@ export default function Today() {
 
   const crisisActive = crisis.data?.mode === 'active';
 
+  const greet = useMemo(() => greeting(), []);
+  const headerTitle = useMemo(
+    () => (greet.split(' ')[1] === 'morning' ? 'Morning' : greet.replace('Good ', '')),
+    [greet],
+  );
+
   return (
     <Screen
       refreshControl={
@@ -53,7 +61,7 @@ export default function Today() {
       }
     >
       <Header
-        title={greeting().split(' ')[1] === 'morning' ? 'Morning' : greeting().replace('Good ', '')}
+        title={headerTitle}
         subtitle={`${user?.name?.split(' ')[0] ?? 'Welcome'} — here is what is circulating today.`}
       />
 
@@ -117,11 +125,31 @@ export default function Today() {
       </TouchCard>
 
       {/* Election & Crisis Rapid-Response Mode */}
-      {crisisActive ? (
+      {crisis.isLoading ? (
+        <>
+          <SectionTitle>Crisis rapid response</SectionTitle>
+          <SkeletonCard lines={2} />
+        </>
+      ) : crisis.isError ? (
+        <EmptyState
+          icon="warning-outline"
+          title="Could not load crisis updates"
+          body="The rapid-response feed failed to load."
+          action={
+            <Button
+              title="Retry"
+              variant="secondary"
+              onPress={() => {
+                void crisis.refetch();
+              }}
+            />
+          }
+        />
+      ) : crisisActive ? (
         <>
           <SectionTitle
             action={
-              <Chip label="LIVE" color="#FF4757" active icon="radio-outline" />
+              <Chip label="LIVE" color={colors.danger} active icon="radio-outline" />
             }
           >
             Crisis rapid response
@@ -129,13 +157,13 @@ export default function Today() {
 
           <Animated.View entering={FadeInDown.duration(420)}>
             <LinearGradient
-              colors={[alpha('#FF4757', 0.14), alpha('#FF4757', 0.02)]}
+              colors={[alpha(colors.danger, 0.14), alpha(colors.danger, 0.02)]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={{
                 borderRadius: 20,
                 borderWidth: 1,
-                borderColor: alpha('#FF4757', 0.3),
+                borderColor: alpha(colors.danger, 0.3),
                 padding: 14,
                 gap: 12,
               }}
@@ -144,7 +172,7 @@ export default function Today() {
                 The false claims spreading fastest right now, with their corrections.
               </Text>
 
-              {crisis.data!.items.slice(0, 4).map((item, i) => (
+              {crisis.data!.items.slice(0, 4).map((item) => (
                 <View
                   key={item._id}
                   className="rounded-2xl p-3"
@@ -180,8 +208,8 @@ export default function Today() {
                   ) : null}
 
                   <View className="flex-row items-center" style={{ gap: 6 }}>
-                    <Ionicons name="trending-up" size={12} color="#FF4757" />
-                    <Text className="font-medium" style={{ fontSize: 11, color: '#FF8A94' }}>
+                    <Ionicons name="trending-up" size={12} color={colors.danger} />
+                    <Text className="font-medium" style={{ fontSize: 11, color: colors.dangerSoft }}>
                       Circulation {item.circulationScore}/100
                     </Text>
                   </View>
@@ -204,12 +232,25 @@ export default function Today() {
       </SectionTitle>
 
       {alerts.isLoading ? (
-        <Loading label="Fetching today's verified updates" />
+        <View style={{ gap: 10 }}>
+          <SkeletonCard lines={2} />
+          <SkeletonCard lines={2} />
+          <SkeletonCard lines={2} />
+        </View>
       ) : alerts.isError ? (
         <EmptyState
           icon="cloud-offline-outline"
           title="Could not load updates"
-          body="Pull down to try again."
+          body="Check your connection and try again."
+          action={
+            <Button
+              title="Retry"
+              variant="secondary"
+              onPress={() => {
+                void alerts.refetch();
+              }}
+            />
+          }
         />
       ) : alerts.data!.items.length === 0 ? (
         <EmptyState
@@ -224,7 +265,12 @@ export default function Today() {
             const v = verdictOf(item.verdict);
 
             return (
-              <Card key={item._id} index={i}>
+              <Card
+                key={item._id}
+                index={i}
+                accessible
+                accessibilityLabel={`${item.title}. ${item.summary}`}
+              >
                 <View className="flex-row items-center justify-between mb-2.5">
                   <Chip label={topic.label} color={topic.color} active />
                   <VerdictBadge verdict={item.verdict} size="sm" />
@@ -262,11 +308,11 @@ export default function Today() {
 
       {/* Shortcuts */}
       <SectionTitle>More</SectionTitle>
-      <View className="flex-row" style={{ gap: 10 }}>
+      <View className="flex-row" style={{ gap: isWide ? 12 : 10 }}>
         {[
           { label: 'Learn', icon: 'book-outline' as const, href: '/learn', color: colors.info },
-          { label: 'Radio', icon: 'radio-outline' as const, href: '/radio', color: '#FFB020' },
-          { label: 'Schools', icon: 'school-outline' as const, href: '/campaigns', color: '#B388FF' },
+          { label: 'Radio', icon: 'radio-outline' as const, href: '/radio', color: colors.warning },
+          { label: 'Schools', icon: 'school-outline' as const, href: '/campaigns', color: colors.violet },
         ].map((s) => (
           <View key={s.label} className="flex-1">
             <TouchCard onPress={() => router.push(s.href as never)} className="items-center py-4">

@@ -22,6 +22,12 @@ export const colors = {
   zahiriGlow: '#4DFFC3',
 
   info: '#6C8BFF',
+
+  danger: '#FF4757',
+  dangerSoft: '#FF8A94',
+  warning: '#FFB020',
+  caution: '#FF9A3C',
+  violet: '#B388FF',
 } as const;
 
 export type Verdict = 'verified' | 'false' | 'misleading' | 'unverified' | 'pending';
@@ -100,12 +106,34 @@ export const spring = {
   mass: 0.7,
 } as const;
 
+export const spacing = {
+  gutter: 20,
+} as const;
+
+export const radii = {
+  card: 20,
+  pill: 999,
+  sm: 8,
+  md: 12,
+  lg: 16,
+} as const;
+
+export const typeScale = {
+  micro: 11,
+  caption: 12,
+  body: 15,
+  lead: 17,
+  title: 20,
+  h2: 26,
+  h1: 34,
+} as const;
+
 export const topicMeta: Record<string, { label: string; color: string }> = {
-  health: { label: 'Health', color: '#00D68F' },
-  education: { label: 'Education', color: '#6C8BFF' },
-  civic: { label: 'Civic', color: '#B388FF' },
-  local: { label: 'Local', color: '#FFB020' },
-  election: { label: 'Election', color: '#FF9A3C' },
-  crisis: { label: 'Crisis', color: '#FF4757' },
-  general: { label: 'General', color: '#8FA3B5' },
+  health: { label: 'Health', color: colors.zahiri },
+  education: { label: 'Education', color: colors.info },
+  civic: { label: 'Civic', color: colors.violet },
+  local: { label: 'Local', color: colors.warning },
+  election: { label: 'Election', color: colors.caution },
+  crisis: { label: 'Crisis', color: colors.danger },
+  general: { label: 'General', color: colors.chalkSoft },
 };

@@ -1,9 +1,10 @@
-import { Pressable, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable, RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { Card, EmptyState, Loading, Screen } from '../components/ui';
+import { Button, Card, Chip, EmptyState, Screen } from '../components/ui';
 import { api } from '../lib/api';
 import { alpha, colors } from '../theme/tokens';
 
@@ -26,14 +27,28 @@ const LANGUAGE_NAME: Record<string, string> = {
 
 export default function Radio() {
   const router = useRouter();
+  const qc = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
 
   const partners = useQuery({
     queryKey: ['radio'],
     queryFn: () => api<{ count: number; items: Partner[] }>('/api/campaigns/radio'),
   });
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await qc.invalidateQueries({ queryKey: ['radio'] });
+    setRefreshing(false);
+  }, [qc]);
+
+  const warning: string = colors.warning;
+
   return (
-    <Screen>
+    <Screen
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.zahiri} />
+      }
+    >
       <View className="flex-row items-center pt-2 pb-6" style={{ gap: 12 }}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Ionicons name="arrow-back" size={22} color={colors.chalkSoft} />
@@ -49,11 +64,22 @@ export default function Radio() {
       </View>
 
       {partners.isLoading ? (
-        <Loading label="Loading stations" />
+        <SkeletonCards />
       ) : partners.isError ? (
-        <EmptyState icon="radio-outline" title="Could not load stations" />
+        <EmptyState
+          icon="radio-outline"
+          title="Could not load stations"
+          body="Check your connection and try again."
+          action={
+            <Button title="Retry" variant="secondary" onPress={() => partners.refetch()} />
+          }
+        />
       ) : partners.data!.items.length === 0 ? (
-        <EmptyState icon="radio-outline" title="No stations listed yet" />
+        <EmptyState
+          icon="radio-outline"
+          title="No stations"
+          body="No partner stations are listed yet. Pull down to refresh."
+        />
       ) : (
         <View style={{ gap: 10 }}>
           {partners.data!.items.map((p, i) => (
@@ -64,12 +90,12 @@ export default function Radio() {
                   style={{
                     width: 46,
                     height: 46,
-                    backgroundColor: alpha('#FFB020', 0.14),
+                    backgroundColor: alpha(warning, 0.14),
                     borderWidth: 1,
-                    borderColor: alpha('#FFB020', 0.3),
+                    borderColor: alpha(warning, 0.3),
                   }}
                 >
-                  <Ionicons name="radio" size={22} color="#FFB020" />
+                  <Ionicons name="radio" size={22} color={warning} />
                 </View>
 
                 <View className="flex-1">
@@ -84,15 +110,7 @@ export default function Radio() {
 
               <View className="flex-row flex-wrap mt-3" style={{ gap: 6 }}>
                 {p.languages.map((l) => (
-                  <View
-                    key={l}
-                    className="rounded-pill px-2.5 py-1"
-                    style={{ backgroundColor: colors.inkHigh }}
-                  >
-                    <Text className="font-medium text-chalk-soft" style={{ fontSize: 11 }}>
-                      {LANGUAGE_NAME[l] ?? l}
-                    </Text>
-                  </View>
+                  <Chip key={l} label={LANGUAGE_NAME[l] ?? l} />
                 ))}
               </View>
 
@@ -119,5 +137,25 @@ export default function Radio() {
         </View>
       )}
     </Screen>
+  );
+}
+
+function SkeletonCards() {
+  return (
+    <View style={{ gap: 10 }}>
+      {[0, 1].map((i) => (
+        <View
+          key={i}
+          style={{
+            borderRadius: 20,
+            height: 132,
+            backgroundColor: colors.inkHigh,
+            borderWidth: 1,
+            borderColor: colors.inkEdge,
+            opacity: 0.7,
+          }}
+        />
+      ))}
+    </View>
   );
 }

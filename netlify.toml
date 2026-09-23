@@ -1,0 +1,41 @@
+# Zahiri web on Netlify — ZERO manual env entry.
+# All secrets (MONGODB_URI, JWT_SECRET, NVIDIA/OPENROUTER keys, WhatsApp)
+# stay on Render where they are already set. This file carries the ONLY
+# frontend var (public API URL, baked at build time), so connecting this
+# repo in Netlify deploys with no dashboard env typing.
+#
+# Render side: keep CORS_ORIGINS as '' (allow-all, current default) and the
+# Netlify site talks to the API with no Render changes.
+
+[build]
+  base = "mobile"
+  command = "npm ci && npx expo export --platform web"
+  publish = "dist"
+
+[build.environment]
+  EXPO_PUBLIC_API_URL = "https://zahiri-api.onrender.com"
+  NODE_VERSION = "20"
+  EXPO_NO_TELEMETRY = "1"
+
+# expo-router client routing: serve shell for all routes (static assets still win)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Hashed Metro bundles: immutable
+[[headers]]
+  for = "/_expo/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Shell must never stick
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"

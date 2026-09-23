@@ -26,18 +26,34 @@ import { CONTENT_MAX_WIDTH, useResponsive } from '../../theme/responsive';
 
 type Mode = 'text' | 'media';
 
+type AttachedFile = { uri: string; name: string; type: string; size: number | null };
+
 const EXAMPLES = [
   'Salt water cures malaria',
   'JAMB extended registration',
   'This voice note from my group',
 ];
 
+function shortLabel(mime: string): string {
+  if (mime.startsWith('image/')) return `${mime.slice(6).toUpperCase()} image`;
+  if (mime.startsWith('video/')) return `${mime.slice(6).toUpperCase()} video`;
+  if (mime.startsWith('audio/')) return `${mime.slice(6).toUpperCase()} audio`;
+  return mime || 'File';
+}
+
+function formatSize(bytes: number | null | undefined): string {
+  if (bytes == null || Number.isNaN(bytes)) return 'Unknown size';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function Verify() {
   const { gutter } = useResponsive();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>('text');
   const [claim, setClaim] = useState('');
-  const [file, setFile] = useState<{ uri: string; name: string; type: string } | null>(null);
+  const [file, setFile] = useState<AttachedFile | null>(null);
   const [note, setNote] = useState('');
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [busy, setBusy] = useState(false);
@@ -69,6 +85,7 @@ export default function Verify() {
       uri: a.uri,
       name: a.fileName ?? `upload.${a.uri.split('.').pop() ?? 'jpg'}`,
       type: a.mimeType ?? (a.type === 'video' ? 'video/mp4' : 'image/jpeg'),
+      size: (a as { fileSize?: number | null }).fileSize ?? null,
     });
     setError(null);
   }
@@ -81,11 +98,20 @@ export default function Verify() {
     if (picked.canceled || !picked.assets[0]) return;
 
     const a = picked.assets[0];
-    setFile({ uri: a.uri, name: a.name, type: a.mimeType ?? 'application/octet-stream' });
+    setFile({ uri: a.uri, name: a.name, type: a.mimeType ?? 'application/octet-stream', size: a.size ?? null });
     setError(null);
   }
 
+  const canSubmit = mode === 'text' ? claim.trim().length >= 3 : Boolean(file);
+
   async function submit() {
+    if (busy) return;
+    if (mode === 'text' ? claim.trim().length < 3 : !file) {
+      setError(
+        mode === 'text' ? 'Type or paste at least 3 characters to check.' : 'Choose a file first.',
+      );
+      return;
+    }
     setError(null);
     setBusy(true);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -116,13 +142,12 @@ export default function Verify() {
     }
   }
 
-  const canSubmit = mode === 'text' ? claim.trim().length >= 3 : Boolean(file);
-
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-ink">
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'android' ? 24 : 0}
       >
         <ScrollView
           className="flex-1"
@@ -130,13 +155,19 @@ export default function Verify() {
           contentContainerStyle={{ paddingBottom: 110, paddingHorizontal: gutter }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          automaticallyAdjustKeyboardInsets
         >
           <View className="flex-row items-center justify-between pt-2 pb-5">
             <Text className="font-display text-h1 text-chalk" style={{ letterSpacing: -0.8 }}>
               Verify
             </Text>
             {!result ? (
-              <Pressable onPress={() => router.push('/chat')} hitSlop={10}>
+              <Pressable
+                onPress={() => router.push('/chat')}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Ask Zahiri"
+              >
                 <View className="flex-row items-center" style={{ gap: 5 }}>
                   <Ionicons name="chatbubbles-outline" size={16} color={colors.info} />
                   <Text style={{ color: colors.info, fontFamily: 'Inter_500Medium', fontSize: 13 }}>
@@ -145,7 +176,12 @@ export default function Verify() {
                 </View>
               </Pressable>
             ) : (
-              <Pressable onPress={reset} hitSlop={10}>
+              <Pressable
+                onPress={reset}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel="Start a new check"
+              >
                 <View className="flex-row items-center" style={{ gap: 5 }}>
                   <Ionicons name="refresh" size={15} color={colors.zahiri} />
                   <Text style={{ color: colors.zahiri, fontFamily: 'Inter_500Medium', fontSize: 13 }}>
@@ -184,6 +220,9 @@ export default function Verify() {
                         backgroundColor: active ? alpha(colors.zahiri, 0.16) : 'transparent',
                         gap: 6,
                       }}
+                      accessibilityRole="button"
+                      accessibilityLabel={m.label}
+                      accessibilityState={{ selected: active }}
                       onPress={() => {
                         void Haptics.selectionAsync();
                         setMode(m.key);
@@ -227,6 +266,9 @@ export default function Verify() {
                       onChangeText={setClaim}
                       multiline
                       textAlignVertical="top"
+                      maxLength={4000}
+                      accessibilityLabel="Claim to verify"
+                      accessibilityHint="Paste the message, claim, or link you want checked"
                       style={{
                         color: colors.chalk,
                         fontFamily: 'Inter_400Regular',
@@ -236,11 +278,20 @@ export default function Verify() {
                       }}
                     />
                     <View className="flex-row items-center justify-between mt-2">
-                      <Text className="font-sans text-chalk-faint" style={{ fontSize: 11 }}>
+                      <Text
+                        className="font-sans text-chalk-faint"
+                        style={{ fontSize: 11 }}
+                        accessibilityLabel={`${claim.length} of 4000 characters used`}
+                      >
                         {claim.length}/4000
                       </Text>
                       {claim.length > 0 ? (
-                        <Pressable onPress={() => setClaim('')} hitSlop={8}>
+                        <Pressable
+                          onPress={() => setClaim('')}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel="Clear claim"
+                        >
                           <Ionicons name="close-circle" size={17} color={colors.chalkFaint} />
                         </Pressable>
                       ) : null}
@@ -292,10 +343,15 @@ export default function Verify() {
                             {file.name}
                           </Text>
                           <Text className="font-sans text-chalk-faint" style={{ fontSize: 11.5 }}>
-                            {file.type}
+                            {shortLabel(file.type)} · {formatSize(file.size)}
                           </Text>
                         </View>
-                        <Pressable onPress={() => setFile(null)} hitSlop={10}>
+                        <Pressable
+                          onPress={() => setFile(null)}
+                          hitSlop={10}
+                          accessibilityRole="button"
+                          accessibilityLabel="Remove attached file"
+                        >
                           <Ionicons name="close-circle" size={20} color={colors.chalkFaint} />
                         </Pressable>
                       </View>
@@ -330,6 +386,9 @@ export default function Verify() {
                       onChangeText={setNote}
                       multiline
                       textAlignVertical="top"
+                      maxLength={500}
+                      accessibilityLabel="Additional context"
+                      accessibilityHint="Optional: where you got this file and what it claims"
                       style={{
                         color: colors.chalk,
                         fontFamily: 'Inter_400Regular',
@@ -353,7 +412,8 @@ export default function Verify() {
                   title={mode === 'text' ? 'Check this claim' : 'Analyse this file'}
                   size="lg"
                   icon="shield-checkmark"
-                  disabled={!canSubmit}
+                  loading={busy}
+                  disabled={!canSubmit || busy}
                   onPress={submit}
                 />
               </View>
@@ -394,6 +454,8 @@ function PickerTile({
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={title}
       onPress={() => {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress();

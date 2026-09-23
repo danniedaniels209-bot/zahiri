@@ -9,7 +9,7 @@ import {
   type RefreshControlProps,
   type ViewProps,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Animated, {
@@ -44,6 +44,7 @@ export function Screen({
   narrow?: boolean;
 }) {
   const { gutter, isDesktop } = useResponsive();
+  const insets = useSafeAreaInsets();
   const maxWidth = narrow ? NARROW_MAX_WIDTH : CONTENT_MAX_WIDTH;
 
   // Centred with a cap: a verdict explanation stretched across a desktop
@@ -59,23 +60,20 @@ export function Screen({
 
   return (
     <SafeAreaView edges={edges} className="flex-1 bg-ink">
-      {scroll ? (
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{
-            paddingBottom: isDesktop ? 64 : 48,
-            alignItems: 'center',
-            flexGrow: 1,
-          }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          refreshControl={refreshControl}
-        >
-          {Body}
-        </ScrollView>
-      ) : (
-        <View className="flex-1 items-center">{Body}</View>
-      )}
+      <ScrollView
+        className="flex-1"
+        scrollEnabled={scroll}
+        contentContainerStyle={{
+          paddingBottom: (isDesktop ? 64 : 48) + insets.bottom,
+          alignItems: 'center',
+          flexGrow: 1,
+        }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={refreshControl}
+      >
+        {Body}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -240,7 +238,7 @@ export const Button = forwardRef<View, ButtonProps>(function Button(
     primary: { bg: colors.zahiri, fg: colors.inkDeep, border: 'transparent' },
     secondary: { bg: colors.inkHigh, fg: colors.chalk, border: colors.inkEdge },
     ghost: { bg: 'transparent', fg: colors.chalkSoft, border: 'transparent' },
-    danger: { bg: alpha('#FF4757', 0.16), fg: '#FF4757', border: alpha('#FF4757', 0.4) },
+    danger: { bg: alpha(colors.danger, 0.16), fg: colors.danger, border: alpha(colors.danger, 0.4) },
   }[variant];
 
   return (
@@ -422,6 +420,52 @@ export function ConfidenceMeter({
 // States
 // ---------------------------------------------------------------------------
 
+export function Skeleton({
+  width = '100%',
+  height = 16,
+  radius = 8,
+  style,
+}: {
+  width?: number | string;
+  height?: number;
+  radius?: number;
+  style?: ViewProps['style'];
+}) {
+  return (
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel="Loading"
+      style={[
+        {
+          width: width as never,
+          height,
+          borderRadius: radius,
+          backgroundColor: colors.inkHigh,
+        },
+        style,
+      ]}
+    />
+  );
+}
+
+export function SkeletonCard({ lines = 2 }: { lines?: number }) {
+  return (
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel="Loading"
+      className="bg-ink-raised border border-ink-edge rounded-card p-4"
+      style={{ gap: 10 }}
+    >
+      <Skeleton height={16} width="60%" />
+      {Array.from({ length: lines }).map((_, i) => (
+        <Skeleton key={i} height={12} width="100%" />
+      ))}
+    </View>
+  );
+}
+
 export function Loading({ label = 'Loading' }: { label?: string }) {
   return (
     <View className="items-center justify-center py-16" style={{ gap: 12 }}>
@@ -464,14 +508,14 @@ export function ErrorNote({ message }: { message: string }) {
     <View
       className="flex-row rounded-card p-3.5"
       style={{
-        backgroundColor: alpha('#FF4757', 0.12),
+        backgroundColor: alpha(colors.danger, 0.12),
         borderWidth: 1,
-        borderColor: alpha('#FF4757', 0.35),
+        borderColor: alpha(colors.danger, 0.35),
         gap: 10,
       }}
     >
-      <Ionicons name="alert-circle" size={18} color="#FF4757" style={{ marginTop: 1 }} />
-      <Text className="flex-1 font-sans text-caption" style={{ color: '#FFB4BB', lineHeight: 18 }}>
+      <Ionicons name="alert-circle" size={18} color={colors.danger} style={{ marginTop: 1 }} />
+      <Text className="flex-1 font-sans text-caption" style={{ color: colors.dangerSoft, lineHeight: 18 }}>
         {message}
       </Text>
     </View>

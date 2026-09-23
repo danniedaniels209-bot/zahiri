@@ -1,10 +1,11 @@
-import { Pressable, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable, RefreshControl, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { Button, Card, EmptyState, Loading, Screen, SectionTitle } from '../components/ui';
+import { Button, Card, Chip, EmptyState, Screen, SectionTitle } from '../components/ui';
 import { api } from '../lib/api';
 import { alpha, colors } from '../theme/tokens';
 
@@ -21,15 +22,18 @@ interface Campaign {
 }
 
 const STATUS_COLOR = {
-  planned: '#8FA3B5',
-  confirmed: '#00D68F',
-  completed: '#6C8BFF',
-  cancelled: '#FF4757',
+  planned: colors.chalkSoft,
+  confirmed: colors.zahiri,
+  completed: colors.info,
+  cancelled: colors.danger,
 } as const;
+
+const violet: string = colors.violet;
 
 export default function Campaigns() {
   const router = useRouter();
   const qc = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
 
   const impact = useQuery({
     queryKey: ['impact'],
@@ -49,8 +53,21 @@ export default function Campaigns() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['campaigns'] }),
   });
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ['impact'] }),
+      qc.invalidateQueries({ queryKey: ['campaigns'] }),
+    ]);
+    setRefreshing(false);
+  }, [qc]);
+
   return (
-    <Screen>
+    <Screen
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.zahiri} />
+      }
+    >
       <View className="flex-row items-center pt-2 pb-6" style={{ gap: 12 }}>
         <Pressable onPress={() => router.back()} hitSlop={12}>
           <Ionicons name="arrow-back" size={22} color={colors.chalkSoft} />
@@ -66,13 +83,13 @@ export default function Campaigns() {
       </View>
 
       <LinearGradient
-        colors={[alpha('#B388FF', 0.16), alpha('#B388FF', 0.03)]}
+        colors={[alpha(violet, 0.16), alpha(violet, 0.03)]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{
           borderRadius: 20,
           borderWidth: 1,
-          borderColor: alpha('#B388FF', 0.28),
+          borderColor: alpha(violet, 0.28),
           padding: 18,
         }}
       >
@@ -92,11 +109,22 @@ export default function Campaigns() {
       <SectionTitle>All campaigns</SectionTitle>
 
       {campaigns.isLoading ? (
-        <Loading label="Loading campaigns" />
+        <SkeletonCards />
       ) : campaigns.isError ? (
-        <EmptyState icon="school-outline" title="Could not load campaigns" />
+        <EmptyState
+          icon="school-outline"
+          title="Could not load campaigns"
+          body="Check your connection and try again."
+          action={
+            <Button title="Retry" variant="secondary" onPress={() => campaigns.refetch()} />
+          }
+        />
       ) : campaigns.data!.items.length === 0 ? (
-        <EmptyState icon="school-outline" title="No campaigns scheduled" />
+        <EmptyState
+          icon="school-outline"
+          title="No campaigns"
+          body="No school campaigns are scheduled yet. Pull down to refresh."
+        />
       ) : (
         <View style={{ gap: 10 }}>
           {campaigns.data!.items.map((c, i) => {
@@ -114,14 +142,7 @@ export default function Campaigns() {
                       {[c.city, c.state].filter(Boolean).join(', ')}
                     </Text>
                   </View>
-                  <View
-                    className="rounded-pill px-2.5 py-1"
-                    style={{ backgroundColor: alpha(tint, 0.15) }}
-                  >
-                    <Text style={{ color: tint, fontFamily: 'Inter_600SemiBold', fontSize: 10.5 }}>
-                      {c.status.toUpperCase()}
-                    </Text>
-                  </View>
+                  <Chip label={c.status.toUpperCase()} color={tint} active />
                 </View>
 
                 <View className="flex-row items-center" style={{ gap: 7 }}>
@@ -163,6 +184,26 @@ export default function Campaigns() {
         </View>
       )}
     </Screen>
+  );
+}
+
+function SkeletonCards() {
+  return (
+    <View style={{ gap: 10 }}>
+      {[0, 1].map((i) => (
+        <View
+          key={i}
+          style={{
+            borderRadius: 20,
+            height: 132,
+            backgroundColor: colors.inkHigh,
+            borderWidth: 1,
+            borderColor: colors.inkEdge,
+            opacity: 0.7,
+          }}
+        />
+      ))}
+    </View>
   );
 }
 

@@ -100,12 +100,12 @@ async function main() {
   pass(`${totalDocs} documents total`);
 
   // 4. Seed data ------------------------------------------------------------
+  // Rewards / radio / campaigns are MANUAL-ADD ONLY (see seed.ts header).
+  // Clean DB has 0 — that is correct, not a failure.
   console.log('\n[4] Seed data');
   const checks: [string, number, number][] = [
     ['game rounds', await GameRound.countDocuments({ active: true }), 10],
-    ['rewards', await Reward.countDocuments({ active: true }), 5],
     ['training modules', await TrainingModule.countDocuments(), 4],
-    ['radio partners', await RadioPartner.countDocuments(), 4],
     ['source reputations', await SourceReputation.countDocuments(), 11],
     ['alerts', await Alert.countDocuments({ active: true }), 4],
   ];
@@ -114,6 +114,12 @@ async function main() {
       ? pass(`${label}: ${actual}`)
       : fail(`${label}: expected >= ${expected}, got ${actual}`);
   }
+  console.log(
+    `  NOTE  rewards: ${await Reward.countDocuments({ active: true })} (expected 0 on clean DB — manual-add via POST /api/rewards/catalogue [admin])`,
+  );
+  console.log(
+    `  NOTE  radio partners: ${await RadioPartner.countDocuments()} (expected 0 on clean DB — manual-add via POST /api/admin/radio)`,
+  );
 
   // 5. Write / read / delete round trip -------------------------------------
   console.log('\n[5] Write round trip');
