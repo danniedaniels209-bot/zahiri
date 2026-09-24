@@ -3,6 +3,7 @@ import { Platform, View } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { warmUp } from '../../lib/api';
 import { alpha, colors } from '../../theme/tokens';
@@ -11,6 +12,10 @@ import { CONTENT_MAX_WIDTH, useResponsive } from '../../theme/responsive';
 export default function TabsLayout() {
   const { user, loading } = useAuth();
   const { isDesktop, isWide } = useResponsive();
+  // Edge-to-edge (Expo SDK 57) draws under the Android system nav bar,
+  // so the tab bar must add the bottom inset itself or it gets overlapped.
+  const insets = useSafeAreaInsets();
+  const barHeight = (isWide ? 68 : 62) + insets.bottom;
 
   useEffect(() => {
     // Kick the Render instance awake while the user reads the first screen.
@@ -47,8 +52,8 @@ export default function TabsLayout() {
                 borderColor: colors.inkEdge,
               }
             : {}),
-          height: isWide ? 68 : 62,
-          paddingBottom: 8,
+          height: barHeight,
+          paddingBottom: Math.max(insets.bottom, 8),
           paddingTop: 8,
           elevation: 0,
         },
